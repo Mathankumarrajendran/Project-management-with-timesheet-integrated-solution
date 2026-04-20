@@ -1,0 +1,441 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  SUPER_ADMIN
+  FINANCE_ADMIN
+  PROJECT_MANAGER
+  TEAM_LEAD
+  EMPLOYEE
+  CLIENT
+  AUDITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum BillingType {
+  BILLABLE
+  NON_BILLABLE
+  INTERNAL
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum HealthStatus {
+  ON_TRACK
+  AT_RISK
+  OFF_TRACK
+}
+
+enum TaskType {
+  DEVELOPMENT
+  TESTING
+  DESIGN
+  DOCUMENTATION
+  BUG_FIX
+  ENHANCEMENT
+  MEETING
+  SUPPORT
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  IN_REVIEW
+  COMPLETED
+  APPROVED
+  ON_HOLD
+  CANCELLED
+}
+
+enum SlaStatus {
+  NOT_STARTED
+  ON_TRACK
+  AT_RISK
+  BREACHED
+}
+
+enum TimeLogStatus {
+  DRAFT
+  SUBMITTED
+  L1_APPROVED
+  L1_REJECTED
+  L2_APPROVED
+  L2_REJECTED
+  LOCKED
+}
+
+enum ContractType {
+  FIXED_PRICE
+  TIME_AND_MATERIAL
+  RETAINER
+  DEDICATED_TEAM
+}
+
+// Models
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  password        String
+  firstName       String
+  lastName        String
+  employeeId      String    @unique
+  role            Role
+  department      String?
+  managerId       Int?
+  hourlyRate      Decimal?  @db.Decimal(10, 2)
+  profilePicture  String?
+  phone           String?
+  status          UserStatus @default(ACTIVE)
+  twoFaEnabled    Boolean   @default(false)
+  twoFaSecret     String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  manager         User?     @relation("UserManager", fields: [managerId], references: [id])
+  subordinates    User[]    @relation("UserManager")
+  
+  // Relations
+  projectsManaged Project[] @relation("ProjectManager")
+  projectMembers  ProjectMember[]
+  tasksCreated    Task[]    @relation("TaskCreator")
+  tasksAssigned   Task[]    @relation("TaskAssignee")
+  comments        TaskComment[]
+  timeLogs        TimeLog[]
+  auditLogs       AuditLog[]
+  weeklyTimesheets WeeklyTimesheet[]
+  monthlyTimesheets MonthlyTimesheet[]
+  
+  @@index([email])
+  @@index([employeeId])
+}
+
+model Client {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  name            String    @unique
+  industry        String?
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+  billingAddress  String?
+  paymentTerms    String?
+  contractType    ContractType?
+  contractValue   Decimal?  @db.Decimal(15, 2)
+  contractStart   DateTime?
+  contractEnd     DateTime?
+  currency        String    @default("USD")
+  status          Status    @default(ACTIVE)
+  createdBy       Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  projects        Project[]
+  timeLogs        TimeLog[]
+  
+  @@index([code])
+  @@index([name])
+}
+
+model Project {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  name            String
+  clientId        Int
+  projectType     String?
+  billingType     BillingType @default(BILLABLE)
+  projectManagerId Int?
+  startDate       DateTime?
+  endDate         DateTime?
+  budgetHours     Decimal?  @db.Decimal(10, 2)
+  budgetAmount    Decimal?  @db.Decimal(15, 2)
+  description     String?
+  status          ProjectStatus @default(PLANNING)
+  healthStatus    HealthStatus @default(ON_TRACK)
+  createdBy       Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  client          Client    @relation(fields: [clientId], references: [id])
+  projectManager  User?     @relation("ProjectManager", fields: [projectManagerId], references: [id])
+  
+  tasks           Task[]
+  members         ProjectMember[]
+  sprints         Sprint[]
+  timeLogs        TimeLog[]
+  slaPolicy       Json?     // Stores SLA configuration { "HIGH": 24, "MEDIUM": 72, "LOW": 120 }
+  
+  @@index([code])
+  @@index([clientId])
+  @@index([projectManagerId])
+}
+
+model ProjectMember {
+  id              Int       @id @default(autoincrement())
+  projectId       Int
+  userId          Int
+  role            String    // Team Lead, Developer, Tester, etc.
+  hourlyRate      Decimal?  @db.Decimal(10, 2)
+  joinedDate      DateTime  @default(now())
+  leftDate        DateTime?
+  isActive        Boolean   @default(true)
+  
+  project         Project   @relation(fields: [projectId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Task {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  projectId       Int
+  title           String
+  description     String?
+  taskType        TaskType
+  priority        Priority  @default(MEDIUM)
+  assignedTo      Int?
+  estimatedHours  Decimal?  @db.Decimal(10, 2)
+  actualHours     Decimal?  @db.Decimal(10, 2)
+  dueDate         DateTime?
+  slaTargetHours  Int?
+  slaStartTime    DateTime?
+  slaEndTime      DateTime?
+  slaStatus       SlaStatus @default(NOT_STARTED)
+  status          TaskStatus @default(OPEN)
+  parentTaskId    Int?
+  sprintId        Int?
+  storyPoints     Int?
+  tags            String[]
+  createdBy       Int
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  completedAt     DateTime?
+  approvedBy      Int?
+  approvedAt      DateTime?
+  
+  project         Project   @relation(fields: [projectId], references: [id])
+  assignee        User?     @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  creator         User      @relation("TaskCreator", fields: [createdBy], references: [id])
+  sprint          Sprint?   @relation(fields: [sprintId], references: [id])
+  parentTask      Task?     @relation("SubTasks", fields: [parentTaskId], references: [id])
+  subTasks        Task[]    @relation("SubTasks")
+  
+  comments        TaskComment[]
+  attachments     Attachment[]
+  timeLogs        TimeLog[]
+  
+  @@index([code])
+  @@index([projectId])
+  @@index([assignedTo])
+  @@index([status])
+  @@index([slaStatus])
+}
+
+model TaskComment {
+  id              Int       @id @default(autoincrement())
+  taskId          Int
+  userId          Int
+  comment         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  task            Task      @relation(fields: [taskId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([taskId])
+}
+
+model Attachment {
+  id              Int       @id @default(autoincrement())
+  taskId          Int
+  filename        String
+  originalName    String
+  mimeType        String
+  size            Int
+  url             String
+  uploadedBy      Int
+  createdAt       DateTime  @default(now())
+  
+  task            Task      @relation(fields: [taskId], references: [id])
+  
+  @@index([taskId])
+}
+
+model TimeLog {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  date            DateTime  @db.Date
+  clientId        Int?
+  projectId       Int
+  taskId          Int
+  hours           Decimal   @db.Decimal(5, 2)
+  billable        Boolean   @default(true)
+  description     String
+  status          TimeLogStatus @default(DRAFT)
+  weeklyTimesheetId Int?
+  monthlyTimesheetId Int?
+  submittedAt     DateTime?
+  l1ApproverId    Int?
+  l1ApprovedAt    DateTime?
+  l1RejectionReason String?
+  l2ApproverId    Int?
+  l2ApprovedAt    DateTime?
+  l2RejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
+  client          Client?   @relation(fields: [clientId], references: [id])
+  project         Project   @relation(fields: [projectId], references: [id])
+  task            Task      @relation(fields: [taskId], references: [id])
+  weeklyTimesheet WeeklyTimesheet? @relation(fields: [weeklyTimesheetId], references: [id])
+  monthlyTimesheet MonthlyTimesheet? @relation(fields: [monthlyTimesheetId], references: [id])
+  
+  @@unique([userId, date, taskId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([date])
+  @@index([status])
+}
+
+model WeeklyTimesheet {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  weekStartDate   DateTime  @db.Date
+  weekEndDate     DateTime  @db.Date
+  totalHours      Decimal   @db.Decimal(10, 2)
+  billableHours   Decimal   @db.Decimal(10, 2)
+  status          TimeLogStatus @default(DRAFT)
+  submittedAt     DateTime?
+  l1ApproverId    Int?
+  l1ApprovedAt    DateTime?
+  l1RejectionReason String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
+  timeLogs        TimeLog[]
+  
+  @@unique([userId, weekStartDate])
+  @@index([userId])
+  @@index([weekStartDate])
+  @@index([status])
+}
+
+model MonthlyTimesheet {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  month           Int
+  year            Int
+  totalHours      Decimal   @db.Decimal(10, 2)
+  billableHours   Decimal   @db.Decimal(10, 2)
+  utilization     Decimal   @db.Decimal(5, 2)
+  overtimeHours   Decimal?  @db.Decimal(10, 2)
+  status          TimeLogStatus @default(DRAFT)
+  compiledAt      DateTime?
+  l2ApproverId    Int?
+  l2ApprovedAt    DateTime?
+  l2RejectionReason String?
+  payrollExported Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  user            User      @relation(fields: [userId], references: [id])
+  timeLogs        TimeLog[]
+  
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@index([month, year])
+  @@index([status])
+}
+
+model Sprint {
+  id              Int       @id @default(autoincrement())
+  projectId       Int
+  name            String
+  goal            String?
+  startDate       DateTime
+  endDate         DateTime
+  status          String    // PLANNING, ACTIVE, COMPLETED, CANCELLED
+  plannedPoints   Int?
+  completedPoints Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  project         Project   @relation(fields: [projectId], references: [id])
+  tasks           Task[]
+  
+  @@index([projectId])
+  @@index([status])
+}
+
+model AuditLog {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  action          String
+  entity          String
+  entityId        Int
+  changes         Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime  @default(now())
+
+  user            User      @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  type            String
+  title           String
+  message         String
+  data            Json?
+  read            Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([read])
+}
