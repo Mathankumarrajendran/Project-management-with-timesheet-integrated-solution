@@ -38,3 +38,5 @@ backend/uploads/
 # Test outputs
 *.txt
 e2e-output.txt
+tests/logs/
+
