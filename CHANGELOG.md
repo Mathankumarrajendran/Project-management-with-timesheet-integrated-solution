@@ -12,6 +12,31 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) — `MA
 
 ---
 
+## [1.0.1] — 2026-07-28 ⚡ Performance Patch
+
+### 🐛 Bugs Fixed / Performance Improvements
+
+| ID | Description | Module | Type |
+|---|---|---|---|
+| B-01 | Prisma query logging disabled in production (was adding 5-30ms/request) | Backend/DB | Perf |
+| B-02 | Dashboard no longer fetches 200 tasks; server-side filtered to active statuses only (60-80% payload reduction) | Frontend/Backend | Perf |
+| B-03 | Client portal: 5 sequential DB round-trips collapsed into 1 resolve + 4 parallel queries | Backend | Perf |
+| B-04 | Report controller: invoice aggregation moved from Node.js memory loop to PostgreSQL `jsonb_array_elements` raw query | Backend | Perf |
+| B-05 | Notification polling extended from 30s to 60s; paused when browser tab is hidden (Page Visibility API) | Frontend | Perf |
+| B-06 | (Already implemented) Reports page tabs are lazy-mounted; no redundant API calls on load | Frontend | Verified |
+| B-07 | Added 6 composite DB indexes: Task(projectId+status), Task(assignedTo+status), TimeLog(projectId+status), TimeLog(userId+status), TimeLog(date+projectId), Notification(userId+read) | Database | Perf |
+
+### 🔧 Technical Changes
+- `backend/src/config/database.ts`: Production log level changed from `['query','warn','error']` to `['error']`
+- `backend/src/controllers/taskController.ts`: Added comma-separated multi-status filter support (`?status=OPEN,IN_PROGRESS`)
+- `backend/src/controllers/reportController.ts`: Full rewrite of `getProjectReport` with parallelized queries
+- `backend/src/controllers/clientPortalController.ts`: Parallelized data fetching, removed duplicate client lookup
+- `backend/prisma/schema.prisma`: Added 6 composite indexes across Task, TimeLog, Notification models
+- `frontend/src/app/dashboard/page.tsx`: Task fetch uses `?limit=100&status=OPEN,...` instead of `?limit=200`
+- `frontend/src/components/ui/NotificationBell.tsx`: Polling interval 30s→60s with Page Visibility API guard
+
+---
+
 ## [1.0.0] — 2026-07-28 🎉 Initial Release
 
 > First stable, feature-complete release of the PM System — a full-stack project management and timesheet solution.

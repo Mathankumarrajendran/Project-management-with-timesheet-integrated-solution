@@ -54,10 +54,14 @@ export default function NotificationBell() {
         }
     }, []);
 
-    // Poll every 30s for new notifications
+    // Poll every 60s for new notifications, but only when the tab is visible
+    // Uses Page Visibility API to avoid unnecessary DB queries from background tabs
     useEffect(() => {
         fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000);
+        const interval = setInterval(() => {
+            if (!document.hidden) fetchNotifications();
+        }, 60_000);
+
         return () => clearInterval(interval);
     }, [fetchNotifications]);
 

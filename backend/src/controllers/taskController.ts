@@ -41,7 +41,11 @@ export const getAllTasks = async (req: AuthRequest, res: Response) => {
         const where: any = {};
         if (projectId) where.projectId = parseInt(projectId as string);
         if (assignedTo) where.assignedTo = parseInt(assignedTo as string);
-        if (status) where.status = status;
+        if (status) {
+            // Support comma-separated status values: ?status=OPEN,IN_PROGRESS,COMPLETED
+            const statusValues = (status as string).split(',').map(s => s.trim()).filter(Boolean);
+            where.status = statusValues.length === 1 ? statusValues[0] : { in: statusValues };
+        }
         if (priority) where.priority = priority;
         if (slaStatus) where.slaStatus = slaStatus;
         if (search) {

@@ -269,6 +269,9 @@ model Task {
   @@index([assignedTo])
   @@index([status])
   @@index([slaStatus])
+  // Composite indexes for multi-column dashboard and report queries
+  @@index([projectId, status])
+  @@index([assignedTo, status])
 }
 
 model TaskComment {
@@ -336,6 +339,10 @@ model TimeLog {
   @@index([projectId])
   @@index([date])
   @@index([status])
+  // Composite indexes for report GROUP BY with status filter
+  @@index([projectId, status])
+  @@index([userId, status])
+  @@index([date, projectId])
 }
 
 model WeeklyTimesheet {
@@ -439,6 +446,8 @@ model Notification {
   
   @@index([userId])
   @@index([read])
+  // Composite index for notification bell: fetch unread count per user in one scan
+  @@index([userId, read])
 }
 
 enum InvoiceStatus {

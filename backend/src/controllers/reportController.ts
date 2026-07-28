@@ -107,59 +107,56 @@ export const getTaskReport = async (req: AuthRequest, res: Response) => {
 // Project Summary Report
 export const getProjectReport = async (_req: Request, res: Response) => {
     try {
-        const projects = await prisma.project.findMany({
-            include: {
-                client: { select: { id: true, name: true } },
-                projectManager: { select: { id: true, firstName: true, lastName: true } },
-                _count: { select: { tasks: true, members: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-
-        // Get time logged per project
-        const timeLogs = await prisma.timeLog.groupBy({
-            by: ['projectId'],
-            _sum: { hours: true },
-        });
-        const timeMap = Object.fromEntries(timeLogs.map(t => [t.projectId, t._sum.hours ?? 0]));
-
-        // Get approved time logs per project
-        const approvedLogs = await prisma.timeLog.groupBy({
-            by: ['projectId'],
-            where: {
-                status: {
-                    in: ['L1_APPROVED', 'L2_APPROVED', 'LOCKED'],
+        // Run all four independent aggregations in parallel
+        const [projects, timeLogs, approvedLogs, billedRows] = await Promise.all([
+            prisma.project.findMany({
+                include: {
+                    client: { select: { id: true, name: true } },
+                    projectManager: { select: { id: true, firstName: true, lastName: true } },
+                    _count: { select: { tasks: true, members: true } },
                 },
-            },
-            _sum: { hours: true },
-        });
+                orderBy: { createdAt: 'desc' },
+            }),
+
+            // All logged hours per project
+            prisma.timeLog.groupBy({
+                by: ['projectId'],
+                _sum: { hours: true },
+            }),
+
+            // Approved hours per project (pushed to DB, not client)
+            prisma.timeLog.groupBy({
+                by: ['projectId'],
+                where: { status: { in: ['L1_APPROVED', 'L2_APPROVED', 'LOCKED'] } },
+                _sum: { hours: true },
+            }),
+
+            // ── B-04 FIX: Aggregate invoice line-item hours inside PostgreSQL ──
+            // Previously: loaded ALL invoice items into Node.js memory and looped (O(n×m))
+            // Now: PostgreSQL jsonb_array_elements does the work in a single DB pass
+            prisma.$queryRaw<{ projectId: number; hours: number }[]>`
+                SELECT
+                    (item->>'projectId')::int   AS "projectId",
+                    SUM((item->>'hours')::numeric) AS hours
+                FROM   "Invoice",
+                       jsonb_array_elements(items::jsonb) AS item
+                WHERE  status != 'CANCELLED'
+                  AND  item->>'projectId' IS NOT NULL
+                  AND  item->>'hours'     IS NOT NULL
+                GROUP  BY 1
+            `,
+        ]);
+
+        // Build lookup maps
+        const timeMap     = Object.fromEntries(timeLogs.map(t => [t.projectId, t._sum.hours ?? 0]));
         const approvedMap = Object.fromEntries(approvedLogs.map(t => [t.projectId, t._sum.hours ?? 0]));
-
-        // Get billed hours per project from active invoices
-        const activeInvoices = await prisma.invoice.findMany({
-            where: {
-                status: { not: 'CANCELLED' },
-            },
-            select: { items: true },
-        });
-
-        const billedMap: Record<number, number> = {};
-        for (const inv of activeInvoices) {
-            const items = inv.items as any[];
-            if (Array.isArray(items)) {
-                for (const item of items) {
-                    if (item && typeof item.projectId === 'number' && typeof item.hours === 'number') {
-                        billedMap[item.projectId] = (billedMap[item.projectId] || 0) + item.hours;
-                    }
-                }
-            }
-        }
+        const billedMap   = Object.fromEntries(billedRows.map(r => [r.projectId, Number(r.hours)]));
 
         const enriched = projects.map(p => ({
             ...p,
-            loggedHours: timeMap[p.id] ?? 0,
+            loggedHours:   timeMap[p.id]     ?? 0,
             approvedHours: approvedMap[p.id] ?? 0,
-            billedHours: billedMap[p.id] ?? 0,
+            billedHours:   billedMap[p.id]   ?? 0,
         }));
 
         res.json({ success: true, data: enriched });
@@ -168,3 +165,4 @@ export const getProjectReport = async (_req: Request, res: Response) => {
         res.status(500).json({ success: false, message: 'Failed to generate report', error: error.message });
     }
 };
+

@@ -6,9 +6,11 @@ export const getClientDashboardData = async (req: Request, res: Response) => {
         const user = (req as any).user;
         let clientId: number;
 
+        // ── Resolve clientId in a single query ────────────────────────────────
         if (user.role === 'CLIENT') {
             const client = await prisma.client.findFirst({
                 where: { contactEmail: user.email },
+                select: { id: true },
             });
             if (!client) {
                 return res.status(404).json({
@@ -27,73 +29,68 @@ export const getClientDashboardData = async (req: Request, res: Response) => {
             }
             clientId = parseInt(qId as string);
         } else {
-            return res.status(403).json({
-                success: false,
-                message: 'Access denied.',
-            });
+            return res.status(403).json({ success: false, message: 'Access denied.' });
         }
 
-        // Fetch client details
-        const client = await prisma.client.findUnique({
-            where: { id: clientId },
-        });
+        // ── All three data fetches run in parallel ─────────────────────────────
+        const [client, projects, tasks, invoices] = await Promise.all([
+            // Client details
+            prisma.client.findUnique({
+                where: { id: clientId },
+            }),
+
+            // Projects for this client
+            prisma.project.findMany({
+                where: { clientId },
+                include: {
+                    projectManager: {
+                        select: { id: true, firstName: true, lastName: true },
+                    },
+                    _count: {
+                        select: { tasks: true, members: true },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+            }),
+
+            // Tasks across all client projects
+            prisma.task.findMany({
+                where: { project: { clientId } },
+                select: {
+                    id: true,
+                    code: true,
+                    title: true,
+                    status: true,
+                    priority: true,
+                    slaStatus: true,
+                    dueDate: true,
+                    project: { select: { id: true, name: true, code: true } },
+                    assignee: { select: { id: true, firstName: true, lastName: true } },
+                },
+                orderBy: { dueDate: 'asc' },
+            }),
+
+            // Invoices for this client (excluding cancelled)
+            prisma.invoice.findMany({
+                where: { clientId, status: { not: 'CANCELLED' } },
+                orderBy: { issueDate: 'desc' },
+            }),
+        ]);
 
         if (!client) {
-            return res.status(404).json({
-                success: false,
-                message: 'Client not found.',
-            });
+            return res.status(404).json({ success: false, message: 'Client not found.' });
         }
-
-        // Fetch associated projects
-        const projects = await prisma.project.findMany({
-            where: { clientId },
-            include: {
-                projectManager: {
-                    select: { id: true, firstName: true, lastName: true },
-                },
-                _count: {
-                    select: { tasks: true, members: true },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-
-        // Fetch task stats & task lists
-        const tasks = await prisma.task.findMany({
-            where: {
-                project: { clientId },
-            },
-            include: {
-                project: { select: { id: true, name: true, code: true } },
-                assignee: { select: { id: true, firstName: true, lastName: true } },
-            },
-            orderBy: { dueDate: 'asc' },
-        });
 
         const totalTasks = tasks.length;
         const completedTasks = tasks.filter(t => t.status === 'COMPLETED').length;
         const pendingTasks = totalTasks - completedTasks;
-
-        // Fetch invoices associated with client (excluding CANCELLED)
-        const invoices = await prisma.invoice.findMany({
-            where: {
-                clientId,
-                status: { not: 'CANCELLED' },
-            },
-            orderBy: { issueDate: 'desc' },
-        });
 
         res.json({
             success: true,
             data: {
                 client,
                 projects,
-                tasksSummary: {
-                    totalTasks,
-                    completedTasks,
-                    pendingTasks,
-                },
+                tasksSummary: { totalTasks, completedTasks, pendingTasks },
                 tasks,
                 invoices,
             },
