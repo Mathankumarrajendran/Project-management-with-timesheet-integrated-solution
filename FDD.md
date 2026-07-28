@@ -23,6 +23,8 @@
 12. [FR-10: Reporting](#12-fr-10-reporting)
 13. [FR-11: Notifications](#13-fr-11-notifications)
 14. [FR-12: Audit Logs](#14-fr-12-audit-logs)
+15. [FR-13: Invoice Management](#15-fr-13-invoice-management)
+16. [Future Scopes](#16-future-scopes)
 
 ---
 
@@ -167,13 +169,15 @@ The system supports the following roles:
 
 ---
 
-## 8. FR-08: Task Management
+## 8. FR-06: Task Management
 
 ### FR-06.1 — List All Tasks
 - Any authenticated user can retrieve tasks with optional filters (by project, status, assignee, SLA status, etc.).
+- Displays the **Project Name** instead of the Project Code in the listing for improved visual reference.
 
-### FR-06.2 — View Task by ID
-- Any authenticated user can view the full details of a specific task.
+### FR-06.2 — View Task by ID / Detail Portal
+- Any authenticated user can click on a task row to navigate to the dedicated details page (`/tasks/[id]`), showing the comprehensive task detail form.
+- The system dynamically aggregates total hours submitted against the task (excluding draft and rejected logs) and displays them as a prominent progress chip/badge at the top of the header.
 
 ### FR-06.3 — Get Tasks by SLA Status
 - Any authenticated user can filter and retrieve tasks by their SLA status (`ON_TRACK`, `AT_RISK`, `BREACHED`).
@@ -314,12 +318,16 @@ All reports are restricted to `SUPER_ADMIN`, `PROJECT_MANAGER`, and `FINANCE_ADM
 
 ### FR-10.1 — Time Log Report
 - Generates a report of time log entries with filters (e.g., by project, date range, user, billable flag).
+- Renders real-time interactive bar charts showing total logged hours by project and allocation comparisons among team members.
 
 ### FR-10.2 — Task Report
 - Generates a report of tasks with filters (e.g., by project, status, assignee, SLA status, priority).
+- Renders interactive donut/pie charts for task status and SLA compliance distribution, and bar charts for priority counts.
 
 ### FR-10.3 — Project Report
 - Generates a report of projects with filters (e.g., by status, client, date range, budget utilisation).
+- Displays aggregated **Approved Hours** (sum of L1_APPROVED, L2_APPROVED, and LOCKED time logs) and **Billed Hours** (sum of hours inside active generated invoices) alongside Logged Hours and Budget Hours.
+- Renders a multi-dimensional Composed Chart displaying Logged Hours, Approved Hours, and Billed Hours side-by-side against a benchmark project budget line.
 
 ---
 
@@ -347,6 +355,44 @@ All reports are restricted to `SUPER_ADMIN`, `PROJECT_MANAGER`, and `FINANCE_ADM
 ### FR-12.1 — View Audit Logs
 - `SUPER_ADMIN` and `PROJECT_MANAGER` can retrieve a list of all system audit log entries.
 - Supports filters and pagination (e.g., by entity type, action, user, date range).
+
+---
+
+## 15. FR-13: Invoice Management
+
+### FR-13.1 — Preview Invoice
+- Allows compiling and previewing billable details before finalising the invoice record.
+- Resolves resources' billing rates per hour: checks project-specific member rates first, falling back to default user hourly rates second.
+
+### FR-13.2 — Generate Invoice
+- Automatically assigns a unique serial number (e.g. `INV-YYYY-XXXX`).
+- Determines invoice due date dynamically based on the client's payment terms (e.g., NET 30, NET 15).
+- Saves invoice details, client references, billing ranges, payment terms, and calculated itemised line items in the database.
+
+### FR-13.3 — List Invoices
+- Displays a central invoice dashboard filtering generated invoices.
+- Provides visual analytics cards (Total Invoiced, Total Paid / Received, and Total Billed Hours).
+
+### FR-13.4 — Detailed Print Layout
+- Displays billing and payment remittance info along with itemised Project, Task, Resource, Hours, and Rates.
+- Enforces media CSS print stylesheet overrides to hide sidebar layouts, navigation bars, and page buttons, enabling standard browser print-to-PDF export.
+
+### FR-13.5 — Invoice Status Modification
+- Enforces status transition updates via non-duplicating PATCH requests (`DRAFT`, `SENT`, `PAID`, `OVERDUE`, `CANCELLED`).
+
+### FR-13.6 — Billing Validation
+- Implements strict validation constraints ensuring only approved hours (`L1_APPROVED`, `L2_APPROVED`, `LOCKED`) are queryable or billable (unapproved logs are excluded).
+
+---
+
+## 16. Future Scopes
+
+- **Automated Client Mailing**: Seamlessly email generated PDF invoices directly to client emails upon status transition to `SENT`.
+- **Payment Gateway Integration**: Direct invoice payment processing through Stripe, PayPal, or automated bank transfer networks.
+- **Tax and Discount Line Items**: Support custom tax rates, discount packages, and non-time-based project expenses in the invoice editor.
+- **Resource Billing Adjustments**: Dynamic rate adjustments based on role seniority, overtime multipliers, or custom rules.
+- **Client Invoicing Approval Workflow**: Multiple internal validation levels before an invoice can be finalized.
+- **Client Login Portal**: Enable client users to log in, view, approve, and track invoices online.
 
 ---
 

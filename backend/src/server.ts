@@ -13,6 +13,8 @@ import auditLogRoutes from './routes/auditLogRoutes';
 import reportRoutes from './routes/reportRoutes';
 import timesheetRoutes from './routes/timesheetRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import invoiceRoutes from './routes/invoiceRoutes';
+import clientPortalRoutes from './routes/clientPortalRoutes';
 
 dotenv.config();
 
@@ -59,6 +61,8 @@ app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/timesheets', timesheetRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/client-portal', clientPortalRoutes);
 
 // Catch all
 app.use((_req, res) => {

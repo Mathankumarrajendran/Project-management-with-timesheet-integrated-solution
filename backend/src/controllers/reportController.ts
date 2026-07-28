@@ -123,9 +123,43 @@ export const getProjectReport = async (_req: Request, res: Response) => {
         });
         const timeMap = Object.fromEntries(timeLogs.map(t => [t.projectId, t._sum.hours ?? 0]));
 
+        // Get approved time logs per project
+        const approvedLogs = await prisma.timeLog.groupBy({
+            by: ['projectId'],
+            where: {
+                status: {
+                    in: ['L1_APPROVED', 'L2_APPROVED', 'LOCKED'],
+                },
+            },
+            _sum: { hours: true },
+        });
+        const approvedMap = Object.fromEntries(approvedLogs.map(t => [t.projectId, t._sum.hours ?? 0]));
+
+        // Get billed hours per project from active invoices
+        const activeInvoices = await prisma.invoice.findMany({
+            where: {
+                status: { not: 'CANCELLED' },
+            },
+            select: { items: true },
+        });
+
+        const billedMap: Record<number, number> = {};
+        for (const inv of activeInvoices) {
+            const items = inv.items as any[];
+            if (Array.isArray(items)) {
+                for (const item of items) {
+                    if (item && typeof item.projectId === 'number' && typeof item.hours === 'number') {
+                        billedMap[item.projectId] = (billedMap[item.projectId] || 0) + item.hours;
+                    }
+                }
+            }
+        }
+
         const enriched = projects.map(p => ({
             ...p,
             loggedHours: timeMap[p.id] ?? 0,
+            approvedHours: approvedMap[p.id] ?? 0,
+            billedHours: billedMap[p.id] ?? 0,
         }));
 
         res.json({ success: true, data: enriched });

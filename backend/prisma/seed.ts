@@ -9,7 +9,7 @@ async function main() {
     // Create Super Admin user
     const superAdmin = await prisma.user.upsert({
         where: { email: 'admin@pm-system.com' },
-        update: {},
+        update: { role: Role.SUPER_ADMIN },
         create: {
             email: 'admin@pm-system.com',
             password: await bcrypt.hash('Admin@123456', 10),
@@ -26,7 +26,7 @@ async function main() {
     // Create Finance Admin
     const financeAdmin = await prisma.user.upsert({
         where: { email: 'finance@pm-system.com' },
-        update: {},
+        update: { role: Role.FINANCE_ADMIN },
         create: {
             email: 'finance@pm-system.com',
             password: await bcrypt.hash('Finance@123', 10),
@@ -43,7 +43,7 @@ async function main() {
     // Create Project Manager
     const projectManager = await prisma.user.upsert({
         where: { email: 'pm@pm-system.com' },
-        update: {},
+        update: { role: Role.PROJECT_MANAGER },
         create: {
             email: 'pm@pm-system.com',
             password: await bcrypt.hash('PM@123456', 10),
@@ -61,7 +61,7 @@ async function main() {
     // Create Team Lead
     const teamLead = await prisma.user.upsert({
         where: { email: 'lead@pm-system.com' },
-        update: {},
+        update: { role: Role.TEAM_LEAD },
         create: {
             email: 'lead@pm-system.com',
             password: await bcrypt.hash('Lead@123456', 10),
@@ -80,7 +80,7 @@ async function main() {
     // Create Employee
     const employee = await prisma.user.upsert({
         where: { email: 'employee@pm-system.com' },
-        update: {},
+        update: { role: Role.EMPLOYEE },
         create: {
             email: 'employee@pm-system.com',
             password: await bcrypt.hash('Employee@123', 10),

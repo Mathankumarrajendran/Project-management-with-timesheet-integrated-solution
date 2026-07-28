@@ -194,7 +194,7 @@ export default function TasksPage() {
                                         myTasks.map((task) => (
                                             <TableRow
                                                 key={task.id}
-                                                onClick={() => handleEditTask(task)}
+                                                onClick={() => router.push(`/tasks/${task.id}`)}
                                                 sx={{
                                                     '&:hover': { bgcolor: '#f9f9f9', cursor: 'pointer' },
                                                 }}
@@ -206,8 +206,7 @@ export default function TasksPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Box
-                                                        onClick={() => router.push(`/tasks/${task.id}`)}
-                                                        sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 0.5, '&:hover': { color: '#667eea', textDecoration: 'underline' } }}
+                                                        sx={{ display: 'flex', alignItems: 'center', gap: 0.5, '&:hover': { color: '#667eea', textDecoration: 'underline' } }}
                                                     >
                                                         <Typography variant="body2">{task.title}</Typography>
                                                         <OpenInNew sx={{ fontSize: 12, opacity: 0.5 }} />
@@ -215,7 +214,7 @@ export default function TasksPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Chip
-                                                        label={task.project?.code || 'N/A'}
+                                                        label={task.project?.name || 'N/A'}
                                                         size="small"
                                                         variant="outlined"
                                                     />

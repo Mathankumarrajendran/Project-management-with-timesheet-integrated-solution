@@ -195,6 +195,12 @@ export const getTaskById = async (req: Request, res: Response) => {
                         status: true,
                     },
                 },
+                timeLogs: {
+                    select: {
+                        hours: true,
+                        status: true,
+                    },
+                },
             },
         });
 

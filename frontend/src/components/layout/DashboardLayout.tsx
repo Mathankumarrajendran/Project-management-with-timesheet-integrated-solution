@@ -10,7 +10,7 @@ import {
 import {
     Menu as MenuIcon, Dashboard, People, Business, FolderOpen, Assignment,
     AccessTime, BarChart, Timeline, AccountCircle, Logout,
-    EventNote, HowToVote, AccountBalance, ExpandLess, ExpandMore,
+    EventNote, HowToVote, AccountBalance, ExpandLess, ExpandMore, ReceiptLong,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
@@ -39,6 +39,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     useEffect(() => { setIsMounted(true); }, []);
 
+    // Redirect CLIENT role users to /client-portal if they try to access standard dashboards
+    useEffect(() => {
+        if (isMounted && user?.role === 'CLIENT' && (pathname === '/dashboard' || pathname === '/')) {
+            router.push('/client-portal');
+        }
+    }, [isMounted, user, pathname, router]);
+
     // Keep Timesheets section open when on any /timesheets path
     useEffect(() => {
         if (pathname.startsWith('/timesheets')) setTimesheetOpen(true);
@@ -53,12 +60,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     const topNavItems: NavItem[] = [
-        { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+        { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'EMPLOYEE'] },
+        { text: 'Client Portal', icon: <Business />, path: '/client-portal', roles: ['CLIENT', 'SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER'] },
         { text: 'Users', icon: <People />, path: '/users', roles: ['SUPER_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD'] },
         { text: 'Clients', icon: <Business />, path: '/clients', roles: ['SUPER_ADMIN', 'PROJECT_MANAGER'] },
         { text: 'Projects', icon: <FolderOpen />, path: '/projects', roles: ['SUPER_ADMIN', 'PROJECT_MANAGER'] },
-        { text: 'Tasks', icon: <Assignment />, path: '/tasks' },
-        { text: 'Time Logs', icon: <AccessTime />, path: '/timelogs' },
+        { text: 'Tasks', icon: <Assignment />, path: '/tasks', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'EMPLOYEE'] },
+        { text: 'Time Logs', icon: <AccessTime />, path: '/timelogs', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'EMPLOYEE'] },
     ];
 
     const timesheetChildren: NavItem[] = [
@@ -74,12 +82,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ];
 
     const bottomNavItems: NavItem[] = [
-        { text: 'Sprint Board', icon: <Timeline />, path: '/sprints' },
+        { text: 'Sprint Board', icon: <Timeline />, path: '/sprints', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'EMPLOYEE'] },
         { text: 'Reports', icon: <BarChart />, path: '/reports', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER'] },
+        { text: 'Invoices', icon: <ReceiptLong />, path: '/invoices', roles: ['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER'] },
     ];
 
     const pageTitles: Record<string, string> = {
         '/dashboard': 'Dashboard',
+        '/client-portal': 'Client Portal',
         '/users': 'User Management',
         '/clients': 'Client Management',
         '/projects': 'Projects',
@@ -91,11 +101,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         '/sprints': 'Sprint Board',
         '/reports': 'Reports',
         '/profile': 'My Profile',
+        '/invoices': 'Invoices',
     };
 
     // Dynamic title for task detail pages
     const pageTitle = pathname.startsWith('/tasks/') && pathname !== '/tasks'
         ? 'Task Detail'
+        : pathname.startsWith('/invoices/') && pathname !== '/invoices'
+        ? 'Invoice Detail'
+        : pathname.startsWith('/client-portal')
+        ? 'Client Portal'
         : (pageTitles[pathname] || 'Dashboard');
 
     const NavRow = ({ item }: { item: NavItem }) => {
@@ -132,42 +147,46 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {topNavItems.map(item => <NavRow key={item.text} item={item} />)}
 
                 {/* Timesheets collapsible section */}
-                <ListItem disablePadding>
-                    <ListItemButton onClick={() => setTimesheetOpen(o => !o)}
-                        sx={{ '&.Mui-selected': { borderRight: '3px solid #667eea' } }}
-                        selected={pathname.startsWith('/timesheets')}
-                    >
-                        <ListItemIcon sx={{ color: pathname.startsWith('/timesheets') ? '#667eea' : 'inherit', minWidth: 38 }}>
-                            <EventNote />
-                        </ListItemIcon>
-                        <ListItemText primary="Timesheets" primaryTypographyProps={{ variant: 'body2' }} />
-                        {timesheetOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-                    </ListItemButton>
-                </ListItem>
-                <Collapse in={timesheetOpen} timeout="auto" unmountOnExit>
-                    <List dense disablePadding>
-                        {timesheetChildren.filter(c => isAllowed(c.roles)).map(item => (
-                            <ListItem key={item.text} disablePadding>
-                                <ListItemButton
-                                    selected={pathname === item.path}
-                                    onClick={() => item.path && router.push(item.path)}
-                                    sx={{
-                                        pl: 4,
-                                        '&.Mui-selected': {
-                                            background: 'rgba(102,126,234,0.08)',
-                                            borderRight: '3px solid #667eea',
-                                        },
-                                    }}
-                                >
-                                    <ListItemIcon sx={{ color: pathname === item.path ? '#667eea' : 'inherit', minWidth: 32 }}>
-                                        {item.icon}
-                                    </ListItemIcon>
-                                    <ListItemText primary={item.text} primaryTypographyProps={{ variant: 'body2' }} />
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
-                    </List>
-                </Collapse>
+                {isAllowed(['SUPER_ADMIN', 'FINANCE_ADMIN', 'PROJECT_MANAGER', 'TEAM_LEAD', 'EMPLOYEE']) && (
+                    <>
+                        <ListItem disablePadding>
+                            <ListItemButton onClick={() => setTimesheetOpen(o => !o)}
+                                sx={{ '&.Mui-selected': { borderRight: '3px solid #667eea' } }}
+                                selected={pathname.startsWith('/timesheets')}
+                            >
+                                <ListItemIcon sx={{ color: pathname.startsWith('/timesheets') ? '#667eea' : 'inherit', minWidth: 38 }}>
+                                    <EventNote />
+                                </ListItemIcon>
+                                <ListItemText primary="Timesheets" primaryTypographyProps={{ variant: 'body2' }} />
+                                {timesheetOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                            </ListItemButton>
+                        </ListItem>
+                        <Collapse in={timesheetOpen} timeout="auto" unmountOnExit>
+                            <List dense disablePadding>
+                                {timesheetChildren.filter(c => isAllowed(c.roles)).map(item => (
+                                    <ListItem key={item.text} disablePadding>
+                                        <ListItemButton
+                                            selected={pathname === item.path}
+                                            onClick={() => item.path && router.push(item.path)}
+                                            sx={{
+                                                pl: 4,
+                                                '&.Mui-selected': {
+                                                    background: 'rgba(102,126,234,0.08)',
+                                                    borderRight: '3px solid #667eea',
+                                                },
+                                            }}
+                                        >
+                                            <ListItemIcon sx={{ color: pathname === item.path ? '#667eea' : 'inherit', minWidth: 32 }}>
+                                                {item.icon}
+                                            </ListItemIcon>
+                                            <ListItemText primary={item.text} primaryTypographyProps={{ variant: 'body2' }} />
+                                        </ListItemButton>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Collapse>
+                    </>
+                )}
 
                 <Divider sx={{ my: 0.5 }} />
                 {bottomNavItems.map(item => <NavRow key={item.text} item={item} />)}

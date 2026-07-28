@@ -47,9 +47,21 @@ export default function AuditLogList({ entityType, entityId }: AuditLogListProps
         try {
             setLoading(true);
             const response = await apiClient.get(`/audit-logs?entity=${entityType}&entityId=${entityId}`);
-            setLogs(response.data.data);
+            const data = response.data.data;
+            if (data) {
+                if (Array.isArray(data)) {
+                    setLogs(data);
+                } else if (Array.isArray(data.logs)) {
+                    setLogs(data.logs);
+                } else {
+                    setLogs([]);
+                }
+            } else {
+                setLogs([]);
+            }
         } catch (error) {
             console.error('Failed to fetch audit logs:', error);
+            setLogs([]);
         } finally {
             setLoading(false);
         }

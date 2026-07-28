@@ -168,6 +168,7 @@ model Client {
   
   projects        Project[]
   timeLogs        TimeLog[]
+  invoices        Invoice[]
   
   @@index([code])
   @@index([name])
@@ -438,4 +439,35 @@ model Notification {
   
   @@index([userId])
   @@index([read])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Invoice {
+  id           Int           @id @default(autoincrement())
+  invoiceNumber String       @unique
+  clientId     Int
+  startDate    DateTime
+  endDate      DateTime
+  paymentTerms String?
+  issueDate    DateTime      @default(now())
+  dueDate      DateTime
+  totalHours   Decimal       @db.Decimal(10, 2)
+  totalAmount  Decimal       @db.Decimal(15, 2)
+  currency     String        @default("USD")
+  status       InvoiceStatus @default(DRAFT)
+  items        Json          // List of line items: [{ projectId, projectName, taskId, taskTitle, userId, userName, hours, rate, amount }]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  client       Client        @relation(fields: [clientId], references: [id])
+  
+  @@index([clientId])
+  @@index([invoiceNumber])
 }

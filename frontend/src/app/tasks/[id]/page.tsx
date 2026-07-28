@@ -154,6 +154,12 @@ export default function TaskDetailPage() {
     if (loading) return <DashboardLayout><Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}><CircularProgress /></Box></DashboardLayout>;
     if (error && !task) return <DashboardLayout><Alert severity="error">{error}</Alert></DashboardLayout>;
 
+    const timeLogs = task?.timeLogs ?? [];
+    const totalLoggedHours = timeLogs.reduce((sum: number, log: any) => sum + parseFloat(log.hours || 0), 0);
+    const submittedHours = timeLogs
+        .filter((log: any) => log.status !== 'DRAFT' && log.status !== 'L1_REJECTED' && log.status !== 'L2_REJECTED')
+        .reduce((sum: number, log: any) => sum + parseFloat(log.hours || 0), 0);
+
     const NEXT_STATUSES: Record<string, string[]> = {
         OPEN: ['ASSIGNED', 'IN_PROGRESS'],
         ASSIGNED: ['IN_PROGRESS', 'ON_HOLD'],
@@ -186,6 +192,13 @@ export default function TaskDetailPage() {
                                 <Chip icon={task?.slaStatus === 'BREACHED' ? <Warning fontSize="small" /> : <Schedule fontSize="small" />}
                                     label={task?.slaStatus?.replace(/_/g, ' ')} size="small" color={SLA_COLOR[task?.slaStatus] ?? 'default'} />
                             )}
+                            <Chip
+                                icon={<CheckCircle fontSize="small" />}
+                                label={`Timesheet: ${submittedHours} hrs submitted / ${totalLoggedHours} hrs total`}
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                            />
                         </Box>
                         <Typography variant="h4" fontWeight={700}>{task?.title}</Typography>
                     </Box>
