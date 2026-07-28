@@ -35,8 +35,6 @@ prisma/migrations/dev.db
 # Uploads
 backend/uploads/
 
-# Test outputs
-*.txt
-e2e-output.txt
-tests/logs/
-
+# Development archive — QA docs, test scripts, fixtures, logs
+# These are NOT part of the production codebase
+.dev-archive/
