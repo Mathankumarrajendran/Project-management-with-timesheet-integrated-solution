@@ -201,8 +201,8 @@ Proprietary - All rights reserved
 
 ## 🤝 Support
 
-For support, email support@pm-system.com
+For support, email madhankumarknms@gmail.com
 
 ---
 
-Built with ❤️ for PCB Engineering Industries
+Built with ❤️ for Project management and tracking
