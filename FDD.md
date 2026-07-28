@@ -1,9 +1,17 @@
 # Functional Design Document (FDD)
 ## Project Management System (pm-system)
 
-**Version:** 1.0  
-**Date:** 2026-03-18  
-**Document Type:** Functional Design Document — Functional Requirements Only
+**Version:** 1.0.0  
+**Release Date:** 2026-07-28  
+**Document Status:** Released  
+**Document Type:** Functional Design Document — Functional Requirements Only  
+**Git Tag:** `v1.0.0`  
+
+| Revision | Date | Author | Description |
+|---|---|---|---|
+| 1.0 | 2026-03-18 | Mathankumar Rajendran | Initial draft — core modules FR-01 to FR-12 |
+| 1.1 | 2026-07-08 | Mathankumar Rajendran | Added FR-13 Invoice Management |
+| 1.2 | 2026-07-28 | Mathankumar Rajendran | Added Client Portal, BI Analytics, bug fixes, future scopes — tagged v1.0.0 |
 
 ---
 

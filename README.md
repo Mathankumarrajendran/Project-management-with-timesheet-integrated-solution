@@ -1,19 +1,31 @@
 # Project Management & Time Tracking System
 
-Enterprise-grade Project Management, Time Tracking & Billing System for PCB engineering industries.
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](./RELEASE_NOTES/v1.0.0.md)
+[![Changelog](https://img.shields.io/badge/changelog-view-green.svg)](./CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)]()
 
-## 🚀 Features
+Enterprise-grade Project Management, Time Tracking & Billing System — built for teams managing client projects, multi-level timesheet approvals, and billable hour invoicing.
 
-- **Multi-Client Management**: Manage multiple clients with detailed profiles
-- **Project Management**: Complete project lifecycle management with team assignment
-- **Task Management**: Comprehensive task tracking with SLA monitoring
-- **Time Tracking**: Daily time entry, weekly timesheet submission with dual-level approvals (L1/L2)
-- **SCRUM/Agile**: Sprint planning, backlog management, burndown charts
-- **Dashboards**: Role-specific dashboards with real-time KPIs and analytics
-- **Reporting**: Client billing, employee productivity, project profitability reports
-- **Role-Based Access Control**: 7 roles with granular permissions
-- **Notifications**: Email and in-app notifications for key events
+> **Current Version: v1.0.0** — [Full Release Notes](./RELEASE_NOTES/v1.0.0.md) | [Changelog](./CHANGELOG.md) | [Versioning Strategy](./VERSIONING.md)
+
+---
+
+## 🚀 Features (v1.0.0)
+
+- **Multi-Client Management**: Manage multiple clients with detailed profiles and billing terms
+- **Project Management**: Complete project lifecycle with SLA policy, budget tracking, health status
+- **Task Management**: Full task lifecycle (TODO → COMPLETED) with priority and SLA tracking
+- **Time Tracking**: Daily time entry with 5-stage approval workflow (DRAFT → LOCKED)
+- **Timesheet Approvals**: Dual-level approval — L1 (Project Manager) + L2 (Finance Admin)
+- **Invoice Generation**: Billable-hours invoicing per client with approved-only validation
+- **Client Portal**: Dedicated dashboard for clients to monitor project progress and download invoices
+- **BI Analytics**: Interactive Recharts graphs — time logs, resource allocation, task compliance, project hours
+- **Sprint Board**: Kanban-style sprint management
+- **Dashboard & KPIs**: Role-specific real-time dashboards
+- **Notifications**: In-app notification bell with real-time polling
 - **Audit Trail**: Complete change tracking for compliance
+- **Role-Based Access Control**: 6 roles — SUPER_ADMIN, FINANCE_ADMIN, PROJECT_MANAGER, TEAM_LEAD, EMPLOYEE, CLIENT
+
 
 ## 📋 Tech Stack
 
