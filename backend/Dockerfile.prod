@@ -1,0 +1,42 @@
+# ─── Stage 1: Build ───────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy dependency manifests first (layer cache)
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install all deps (including devDeps needed for build)
+RUN npm ci
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Copy source and compile TypeScript
+COPY . .
+RUN npm run build
+
+# Prune dev dependencies
+RUN npm prune --production
+
+# ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Only copy what is needed at runtime
+COPY --from=builder /app/dist         ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma       ./prisma
+COPY --from=builder /app/package.json ./package.json
+
+# Create upload directory
+RUN mkdir -p ./uploads
+
+EXPOSE 5000
+
+# Run compiled JS — no ts-node, no nodemon, no TypeScript overhead
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]

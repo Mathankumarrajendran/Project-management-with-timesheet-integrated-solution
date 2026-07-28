@@ -38,3 +38,9 @@ backend/uploads/
 # Development archive — QA docs, test scripts, fixtures, logs
 # These are NOT part of the production codebase
 .dev-archive/
+
+# Production secrets — NEVER commit these
+.env.prod
+.env.production
+backend/.env.production
+
