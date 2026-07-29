@@ -1,17 +1,34 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+const getApiBaseUrl = () => {
+    // 1. Explicit environment variable if configured
+    if (process.env.NEXT_PUBLIC_API_BASE_URL && !process.env.NEXT_PUBLIC_API_BASE_URL.includes('localhost')) {
+        return process.env.NEXT_PUBLIC_API_BASE_URL;
+    }
+    // 2. Dynamic runtime resolution in browser
+    if (typeof window !== 'undefined') {
+        const { protocol, hostname, port } = window.location;
+        // Direct port access (3000/8080) -> backend is on 5000
+        if (port === '3000' || port === '8080') {
+            return `${protocol}//${hostname}:5000/api`;
+        }
+        // Nginx/Traefik reverse proxy -> /api on same host
+        return `${protocol}//${hostname}${port ? `:${port}` : ''}/api`;
+    }
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+};
 
 const apiClient = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: getApiBaseUrl(),
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Request interceptor to add token
+// Dynamic base URL check per request
 apiClient.interceptors.request.use(
     (config) => {
+        config.baseURL = getApiBaseUrl();
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -22,6 +39,7 @@ apiClient.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
 
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
