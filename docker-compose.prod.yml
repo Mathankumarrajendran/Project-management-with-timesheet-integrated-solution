@@ -64,6 +64,7 @@ services:
       - uploads_data:/app/uploads
     labels:
       - "traefik.enable=true"
+      - "traefik.exposed=true"
       - "traefik.http.routers.pm-backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.pm-backend.entrypoints=websecure"
       - "traefik.http.routers.pm-backend.tls=true"
@@ -96,6 +97,7 @@ services:
       - "127.0.0.1:3000:3000"
     labels:
       - "traefik.enable=true"
+      - "traefik.exposed=true"
       - "traefik.http.routers.pm-frontend.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.pm-frontend.entrypoints=websecure"
       - "traefik.http.routers.pm-frontend.tls=true"
