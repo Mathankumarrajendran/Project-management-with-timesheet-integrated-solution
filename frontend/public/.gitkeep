@@ -1,0 +1,2 @@
+# This file keeps the public/ directory in git
+# Next.js requires this directory to exist at build time
