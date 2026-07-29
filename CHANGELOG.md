@@ -10,9 +10,22 @@ This project follows [Semantic Versioning (SemVer)](https://semver.org/) — `MA
 | **MINOR** | New backward-compatible features or modules |
 | **PATCH** | Backward-compatible bug fixes, minor UI improvements |
 
+## [1.0.2] — 2026-07-29 🚀 Hostinger VPS Deployment & Bugfix Patch
+
+### 🐛 Bugs Fixed & Infrastructure Improvements
+
+| ID | Description | Module | Type |
+|---|---|---|---|
+| FIX-01 | **Client Portal Infinite Spinner**: Fixed infinite loading state when 0 clients exist in DB; added empty-state notice with navigation action | Frontend | Bugfix |
+| FIX-02 | **Dynamic API Base URL**: Replaced hardcoded build-time API URL with runtime browser location auto-detection (`http://200.141.5.248:5000/api`) | Frontend | Infrastructure |
+| FIX-03 | **CORS Preflight Fix**: Updated backend CORS configuration to dynamically match VPS IP ports and eliminate preflight OPTIONS rejections | Backend | Bugfix |
+| FIX-04 | **Native DB Seeding**: Converted `seed.ts` to pure JavaScript `seed.js` executing directly in Node.js without `ts-node` dev-dependency errors | Database | Infrastructure |
+| FIX-05 | **Hostinger VPS Deployment**: Added production Docker Compose (`docker-compose.prod.yml`), multi-stage Dockerfiles (`Dockerfile.prod`), Nginx reverse proxy configs, and `DEPLOYMENT.md` guide | Deployment | Feature |
+
 ---
 
 ## [1.0.1] — 2026-07-28 ⚡ Performance Patch
+
 
 ### 🐛 Bugs Fixed / Performance Improvements
 
