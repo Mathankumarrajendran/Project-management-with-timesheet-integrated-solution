@@ -1,12 +1,5 @@
 version: '3.8'
 
-networks:
-  pm-network:
-    name: pm-network          # Traefik Docker provider reads this IP via Docker socket
-    driver: bridge            # Linux host can reach bridge subnet IPs directly
-  pm-internal:
-    driver: bridge            # Private DB/Redis network — not exposed to Traefik
-
 services:
 
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
@@ -20,8 +13,6 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - pm-internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
@@ -36,8 +27,6 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
-    networks:
-      - pm-internal
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -69,14 +58,12 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
+    ports:
+      - "127.0.0.1:5000:5000"
     volumes:
       - uploads_data:/app/uploads
-    networks:
-      - pm-network     # Traefik reads this container IP via Docker socket
-      - pm-internal    # Reaches postgres + redis
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=pm-network"
       - "traefik.http.routers.pm-backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.pm-backend.entrypoints=websecure"
       - "traefik.http.routers.pm-backend.tls=true"
@@ -105,11 +92,10 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
       NODE_ENV: production
-    networks:
-      - pm-network     # Traefik reads this container IP via Docker socket
+    ports:
+      - "127.0.0.1:3000:3000"
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=pm-network"
       - "traefik.http.routers.pm-frontend.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.pm-frontend.entrypoints=websecure"
       - "traefik.http.routers.pm-frontend.tls=true"
