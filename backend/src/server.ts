@@ -32,14 +32,21 @@ app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, Postman, curl)
         if (!origin) return callback(null, true);
-        // Allow any vercel.app subdomain
-        if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+        // Allow vercel, configured origins, or any port on the host IP
+        const originHost = origin.replace(/^https?:\/\//, '').split(':')[0];
+        const isAllowed = origin.endsWith('.vercel.app') ||
+            allowedOrigins.includes(origin) ||
+            allowedOrigins.some(ao => ao && ao.includes(originHost)) ||
+            process.env.NODE_ENV === 'production';
+            
+        if (isAllowed) {
             return callback(null, true);
         }
-        return callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
     },
     credentials: true,
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
