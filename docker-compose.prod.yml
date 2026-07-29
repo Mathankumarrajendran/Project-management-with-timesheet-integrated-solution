@@ -59,15 +59,9 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
     ports:
-      - "127.0.0.1:5000:5000"
+      - "5000:5000"
     volumes:
       - uploads_data:/app/uploads
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pm-backend.entrypoints=websecure"
-      - "traefik.http.routers.pm-backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.pm-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.pm-backend.loadbalancer.server.port=5000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
       interval: 30s
@@ -91,13 +85,8 @@ services:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
       NODE_ENV: production
     ports:
-      - "127.0.0.1:3000:3000"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.pm-frontend.entrypoints=websecure"
-      - "traefik.http.routers.pm-frontend.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.pm-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.pm-frontend.loadbalancer.server.port=3000"
+      - "3000:3000"
+      - "8080:3000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
       interval: 30s
