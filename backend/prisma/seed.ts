@@ -6,13 +6,19 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seeding...');
 
-    // Create Super Admin user
+    const defaultAdminPassword = await bcrypt.hash('Admin@123456', 10);
+    const defaultFinancePassword = await bcrypt.hash('Finance@123', 10);
+    const defaultPmPassword = await bcrypt.hash('PM@123456', 10);
+    const defaultLeadPassword = await bcrypt.hash('Lead@123456', 10);
+    const defaultEmpPassword = await bcrypt.hash('Employee@123', 10);
+
+    // Create / Reset Super Admin user
     const superAdmin = await prisma.user.upsert({
         where: { email: 'admin@pm-system.com' },
-        update: { role: Role.SUPER_ADMIN },
+        update: { role: Role.SUPER_ADMIN, password: defaultAdminPassword },
         create: {
             email: 'admin@pm-system.com',
-            password: await bcrypt.hash('Admin@123456', 10),
+            password: defaultAdminPassword,
             firstName: 'Super',
             lastName: 'Admin',
             employeeId: 'EMP001',
@@ -21,15 +27,15 @@ async function main() {
             status: UserStatus.ACTIVE,
         },
     });
-    console.log('✅ Created Super Admin:', superAdmin.email);
+    console.log('✅ Created/Updated Super Admin:', superAdmin.email);
 
-    // Create Finance Admin
+    // Create / Reset Finance Admin
     const financeAdmin = await prisma.user.upsert({
         where: { email: 'finance@pm-system.com' },
-        update: { role: Role.FINANCE_ADMIN },
+        update: { role: Role.FINANCE_ADMIN, password: defaultFinancePassword },
         create: {
             email: 'finance@pm-system.com',
-            password: await bcrypt.hash('Finance@123', 10),
+            password: defaultFinancePassword,
             firstName: 'Finance',
             lastName: 'Admin',
             employeeId: 'EMP002',
@@ -38,15 +44,15 @@ async function main() {
             status: UserStatus.ACTIVE,
         },
     });
-    console.log('✅ Created Finance Admin:', financeAdmin.email);
+    console.log('✅ Created/Updated Finance Admin:', financeAdmin.email);
 
-    // Create Project Manager
+    // Create / Reset Project Manager
     const projectManager = await prisma.user.upsert({
         where: { email: 'pm@pm-system.com' },
-        update: { role: Role.PROJECT_MANAGER },
+        update: { role: Role.PROJECT_MANAGER, password: defaultPmPassword },
         create: {
             email: 'pm@pm-system.com',
-            password: await bcrypt.hash('PM@123456', 10),
+            password: defaultPmPassword,
             firstName: 'Project',
             lastName: 'Manager',
             employeeId: 'EMP003',
@@ -56,15 +62,15 @@ async function main() {
             hourlyRate: 50,
         },
     });
-    console.log('✅ Created Project Manager:', projectManager.email);
+    console.log('✅ Created/Updated Project Manager:', projectManager.email);
 
-    // Create Team Lead
+    // Create / Reset Team Lead
     const teamLead = await prisma.user.upsert({
         where: { email: 'lead@pm-system.com' },
-        update: { role: Role.TEAM_LEAD },
+        update: { role: Role.TEAM_LEAD, password: defaultLeadPassword },
         create: {
             email: 'lead@pm-system.com',
-            password: await bcrypt.hash('Lead@123456', 10),
+            password: defaultLeadPassword,
             firstName: 'Team',
             lastName: 'Lead',
             employeeId: 'EMP004',
@@ -75,15 +81,15 @@ async function main() {
             managerId: projectManager.id,
         },
     });
-    console.log('✅ Created Team Lead:', teamLead.email);
+    console.log('✅ Created/Updated Team Lead:', teamLead.email);
 
-    // Create Employee
+    // Create / Reset Employee
     const employee = await prisma.user.upsert({
         where: { email: 'employee@pm-system.com' },
-        update: { role: Role.EMPLOYEE },
+        update: { role: Role.EMPLOYEE, password: defaultEmpPassword },
         create: {
             email: 'employee@pm-system.com',
-            password: await bcrypt.hash('Employee@123', 10),
+            password: defaultEmpPassword,
             firstName: 'John',
             lastName: 'Doe',
             employeeId: 'EMP005',
@@ -94,10 +100,10 @@ async function main() {
             managerId: teamLead.id,
         },
     });
-    console.log('✅ Created Employee:', employee.email);
+    console.log('✅ Created/Updated Employee:', employee.email);
 
     console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📋 Test Users Created:');
+    console.log('\n📋 Test Users Created/Reset:');
     console.log('━'.repeat(60));
     console.log('Super Admin  : admin@pm-system.com     / Admin@123456');
     console.log('Finance Admin: finance@pm-system.com   / Finance@123');
