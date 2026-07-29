@@ -65,6 +65,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.exposed=true"
+      - "traefik.docker.network=pm-system_default"
       - "traefik.http.routers.pm-backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.pm-backend.entrypoints=web,websecure"
       - "traefik.http.routers.pm-backend.tls=true"
@@ -98,6 +99,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.exposed=true"
+      - "traefik.docker.network=pm-system_default"
       - "traefik.http.routers.pm-frontend.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.pm-frontend.entrypoints=web,websecure"
       - "traefik.http.routers.pm-frontend.tls=true"
