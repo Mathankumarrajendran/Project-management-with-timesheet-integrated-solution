@@ -102,6 +102,58 @@ async function main() {
     });
     console.log('✅ Created/Updated Employee:', employee.email);
 
+    // Create Sample Client
+    const sampleClient = await prisma.client.upsert({
+        where: { code: 'CLI-001' },
+        update: {},
+        create: {
+            name: 'Acme Corporation',
+            code: 'CLI-001',
+            contactName: 'Jane Smith',
+            contactEmail: 'client@acmecorp.com',
+            contactPhone: '+1-555-0199',
+            status: 'ACTIVE',
+        },
+    });
+    console.log('✅ Created Sample Client:', sampleClient.name);
+
+    // Create Sample Project
+    const sampleProject = await prisma.project.upsert({
+        where: { code: 'PRJ-001' },
+        update: {},
+        create: {
+            name: 'Enterprise Portal System',
+            code: 'PRJ-001',
+            description: 'Core web portal development for client engagement.',
+            status: 'IN_PROGRESS',
+            startDate: new Date(),
+            budgetHours: 200,
+            budgetAmount: 15000,
+            clientId: sampleClient.id,
+            managerId: projectManager.id,
+        },
+    });
+    console.log('✅ Created Sample Project:', sampleProject.name);
+
+    // Create Sample Task
+    const existingTask = await prisma.task.findFirst({ where: { code: 'TSK-001' } });
+    if (!existingTask) {
+        await prisma.task.create({
+            data: {
+                title: 'Initial Portal Architecture & Setup',
+                code: 'TSK-001',
+                description: 'Set up core modules and dashboard integration.',
+                status: 'IN_PROGRESS',
+                priority: 'HIGH',
+                projectId: sampleProject.id,
+                assignedTo: employee.id,
+                createdById: superAdmin.id,
+            },
+        });
+        console.log('✅ Created Sample Task TSK-001');
+    }
+
+
     console.log('\n🎉 Database seeding completed successfully!');
     console.log('\n📋 Test Users Created/Reset:');
     console.log('━'.repeat(60));

@@ -108,14 +108,18 @@ export default function ClientPortalPage() {
     // Fetch list of clients for Admin preview selector
     const fetchClients = useCallback(async () => {
         try {
+            setLoading(true);
             const response = await apiClient.get('/clients');
             const clientList = response.data.data.clients || [];
             setClients(clientList);
             if (clientList.length > 0) {
                 setSelectedClientId(String(clientList[0].id));
+            } else {
+                setLoading(false);
             }
         } catch (err) {
             console.error('Failed to fetch clients list:', err);
+            setLoading(false);
         }
     }, []);
 
@@ -136,6 +140,7 @@ export default function ClientPortalPage() {
             setLoading(false);
         }
     }, []);
+
 
     useEffect(() => {
         if (hydrated && user) {
@@ -242,7 +247,22 @@ export default function ClientPortalPage() {
                     )}
                 </Box>
 
+                {isAdmin && clients.length === 0 && !loading && (
+                    <Alert
+                        severity="info"
+                        sx={{ mb: 3 }}
+                        action={
+                            <Button color="inherit" size="small" onClick={() => router.push('/clients')}>
+                                Manage Clients
+                            </Button>
+                        }
+                    >
+                        No client records found in database. Create a client first to preview the Client Portal dashboard.
+                    </Alert>
+                )}
+
                 {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
 
                 {dashboardData && (
                     <Box>
