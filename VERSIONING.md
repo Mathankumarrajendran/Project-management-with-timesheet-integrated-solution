@@ -20,6 +20,21 @@ MAJOR.MINOR.PATCH
 
 ---
 
+## Revision Number Tracking
+
+In addition to Semantic Versioning (`vX.Y.Z`), every formal software build and documentation update is assigned a sequential **Revision Number** (`R-001`, `R-002`, `R-003`...):
+
+| Revision | Version | Description | Release Notes Document |
+|---|---|---|---|
+| **R-001** | `v1.0.0` | Initial baseline release (13 FR modules) | [v1.0.0.md](file:///c:/Users/HP/Desktop/AI%20learnings/Project%20management/pm-system/RELEASE_NOTES/v1.0.0.md) |
+| **R-002** | `v1.0.1` | Full-stack performance optimization patch | [v1.0.1.md](file:///c:/Users/HP/Desktop/AI%20learnings/Project%20management/pm-system/RELEASE_NOTES/v1.0.1.md) |
+| **R-003** | `v1.0.2` | Hostinger VPS deployment, CORS fix, Client Portal fix, native DB seed | [v1.0.2.md](file:///c:/Users/HP/Desktop/AI%20learnings/Project%20management/pm-system/RELEASE_NOTES/v1.0.2.md) |
+
+Master Revision Log: [REVISIONS.md](file:///c:/Users/HP/Desktop/AI%20learnings/Project%20management/pm-system/REVISIONS.md)
+
+---
+
+
 ## Release Types
 
 | Type | Branch | Description |

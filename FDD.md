@@ -1,17 +1,19 @@
 # Functional Design Document (FDD)
 ## Project Management System (pm-system)
 
-**Version:** 1.0.0  
-**Release Date:** 2026-07-28  
+**Version:** 1.0.2  
+**Revision:** R-003  
+**Release Date:** 2026-07-29  
 **Document Status:** Released  
 **Document Type:** Functional Design Document — Functional Requirements Only  
-**Git Tag:** `v1.0.0`  
+**Git Tag:** `v1.0.2`  
 
-| Revision | Date | Author | Description |
-|---|---|---|---|
-| 1.0 | 2026-03-18 | Development Team | Initial draft — core modules FR-01 to FR-12 |
-| 1.1 | 2026-07-08 | Development Team | Added FR-13 Invoice Management |
-| 1.2 | 2026-07-28 | Development Team | Added Client Portal, BI Analytics, bug fixes, future scopes — tagged v1.0.0 |
+| Revision | Date | Author | Version | Description |
+|---|---|---|---|---|
+| R-001 | 2026-07-28 | Development Team | `v1.0.0` | Baseline initial release — FR-01 to FR-13, Client Portal, BI Analytics |
+| R-002 | 2026-07-28 | Development Team | `v1.0.1` | Full-stack performance optimization patch — payload reduction, 6 DB indexes |
+| R-003 | 2026-07-29 | Development Team | `v1.0.2` | Hostinger VPS deployment, CORS fix, Client Portal fix, native DB seed |
+
 
 ---
 
