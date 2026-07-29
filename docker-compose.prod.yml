@@ -1,11 +1,11 @@
 version: '3.8'
 
-# ─── Shared network that Traefik can reach our containers on ──────────────────
 networks:
   pm-network:
-    external: true          # Created manually: docker network create pm-network
+    name: pm-network          # Traefik Docker provider reads this IP via Docker socket
+    driver: bridge            # Linux host can reach bridge subnet IPs directly
   pm-internal:
-    driver: bridge          # Private network for DB/Redis (not exposed to Traefik)
+    driver: bridge            # Private DB/Redis network — not exposed to Traefik
 
 services:
 
@@ -72,18 +72,16 @@ services:
     volumes:
       - uploads_data:/app/uploads
     networks:
-      - pm-network     # Traefik-accessible network
-      - pm-internal    # Can reach postgres + redis
+      - pm-network     # Traefik reads this container IP via Docker socket
+      - pm-internal    # Reaches postgres + redis
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=pm-network"
-      # ── Router: /api/* → backend ────────────────────────────────────────────
       - "traefik.http.routers.pm-backend.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.pm-backend.entrypoints=websecure"
       - "traefik.http.routers.pm-backend.tls=true"
       - "traefik.http.routers.pm-backend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pm-backend.priority=10"
-      # ── Service: internal port ───────────────────────────────────────────────
       - "traefik.http.services.pm-backend.loadbalancer.server.port=5000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/api/health || exit 1"]
@@ -108,17 +106,15 @@ services:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
       NODE_ENV: production
     networks:
-      - pm-network     # Traefik-accessible network
+      - pm-network     # Traefik reads this container IP via Docker socket
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=pm-network"
-      # ── Router: all other traffic → frontend ─────────────────────────────────
       - "traefik.http.routers.pm-frontend.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.pm-frontend.entrypoints=websecure"
       - "traefik.http.routers.pm-frontend.tls=true"
       - "traefik.http.routers.pm-frontend.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pm-frontend.priority=1"
-      # ── Service: internal port ───────────────────────────────────────────────
       - "traefik.http.services.pm-frontend.loadbalancer.server.port=3000"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
