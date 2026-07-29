@@ -1,7 +1,9 @@
 // This is your Prisma schema file
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Include Alpine (musl) binary so Prisma works in node:20-alpine Docker images
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
